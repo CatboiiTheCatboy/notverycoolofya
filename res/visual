@@ -1,0 +1,13 @@
+?begin
+!bg 1
+1 r Disc
+2 r Disc
+5 r Disc
+5 r Disc
+!end 2
+begin
+somewhere
+
+?somewhere
+2 l Disc
+2 l Dsc
