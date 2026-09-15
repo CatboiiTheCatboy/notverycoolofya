@@ -1,13 +1,36 @@
 ?begin
-!bg 1
-1 r Disc
-2 r Disc
-5 r Disc
-5 r Disc
+!bg title
+!trans high1
+blank l  
+scShocked r  
+scShocked r  
+scShocked r Sciss
+scShocked r Sciss
+scShocked r Sciss
+scShocked r  
+scShocked2 r Sciss
+scShocked2 r Sciss
+scShocked2 r  
+!trans pitch
+blank l  
+?hall1
+!trans high2
+scDown r Sciss
+scDown r Sciss
 !end 2
-begin
-somewhere
+hall2
+hall1_
 
-?somewhere
-2 l Disc
-2 l Dsc
+?hall1_
+blank l  
+scLook r Sciss
+scLook r Sciss
+scLook2 r  
+scShocked r  
+scDown r Sciss
+!end 2
+hall2
+hall1_
+
+?hall2
+!Trans 

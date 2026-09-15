@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "res/options.h"
 #include "h/utils.h"
@@ -56,7 +57,9 @@ int main(){
 
     XEvent event;
     XSelectInput(display, window, ButtonPressMask | PointerMotionMask | ButtonPress);
-    XNextEvent(display, &event);
+    //XNextEvent(display, &event);
+    sleep(0);
+    
     Pixmap whole = XCreatePixmap(display, window,
         640, 480, DefaultDepth(display, screen)
     );
@@ -68,29 +71,32 @@ int main(){
 
     char loop = true;
     //char temp[50];
-    while(loop){ //                         menu
-        sleep(0.016666);
+    while(loop){ //                         ---main menu---
+        sleep(0.025);
         //strcpy(temp, "");
         //readALineOfFile("res/novel", temp, 2);
         //printf("%s", temp);
 
         GC mask = XCreateGC(display, whole, 0, NULL);
-        Pixmap title = loadXpm(display, window, "res/gui/title.png.xpm", &mask, 0, 0);
+        Pixmap title = loadXpm(display, window, "res/gui/title.xpm", &mask, 0, 0);
+        Pixmap titleBg = loadXpm(display, window, "res/backgrounds/title.xpm", NULL, 0, 0);
         Pixmap start = makeButton(display, window, "Start", 0);
         Pixmap start_= makeButton(display, window, "Start", 1);
         Pixmap quit  = makeButton(display, window, "Quit", 0);
         Pixmap quit_ = makeButton(display, window, "Quit", 1);
         //XDrawString(display, whole, graph, 0, 14, "A Cool Fan-game", 15);
+        XCopyArea(display, titleBg, whole, graph, 0, 0, 640, 480, 0, 0);
+        XCopyArea(display, title, whole, mask, 0, 0, 640, 480, 0, 0);
+        XCopyArea(display, start, whole, graph, 0, 0, 64, 16, 288, 320);
+        XCopyArea(display, quit , whole, graph, 0, 0, 64, 16, 288, 352);
+        XFreePixmap(display, titleBg);
+        XFreePixmap(display, title);
+        XFreePixmap(display, start);
+        XFreePixmap(display, quit);
         XDrawString(display, whole, graph, 0, 414, "simpleVisual - Copyright (C) 2026  catboiithecatboy/pluem_plu", 61);
         XDrawString(display, whole, graph, 0, 446, "This program comes with ABSOLUTELY NO WARRANTY.", 47);
         XDrawString(display, whole, graph, 0, 462, "This is free software, and you are welcome to redistribute it", 61);
         XDrawString(display, whole, graph, 0, 478, "under certain conditions; see COPYING for details.", 50);
-        XCopyArea(display, title, whole, mask, 0, 0, 640, 480, 0, 0);
-        XCopyArea(display, start, whole, graph, 0, 0, 64, 16, 288, 320);
-        XCopyArea(display, quit , whole, graph, 0, 0, 64, 16, 288, 352);
-        XFreePixmap(display, title);
-        XFreePixmap(display, start);
-        XFreePixmap(display, quit);
 
         while(XPending(display)){
             XNextEvent(display, &event);
@@ -120,14 +126,15 @@ int main(){
     XSetForeground(display, graph, BlackPixel(display, screen));
 
 
-    char character[10] = "1", background[10] = "1";
+    char character[20] = "blank", newCharacter[20], background[20] = "title", newBackground[20];
+    char characterPos = 'l', newCharacterPos;
     short characterWidth = 267, characterHeight = 533;
-    int index = 1, characterX = 640 - characterWidth, characterY = 0;
+    int index = 1, characterX = 0, characterY = 0, transitionCounter = 0;
     char dialog[200], name[20], visual[50], tempVisual[50], path[50], choices[6][50];
-    char choicesEnabled = false;
+    char choicesEnabled = false, state = 0;
     //Pixmap pixmap;
     while(true){ //                     ----visual novel----
-        sleep(0.016666);
+        sleep(0.025);
 
         GC mask = XCreateGC(display, window, 0, NULL);
 
@@ -147,14 +154,20 @@ int main(){
 
                 if(!strcmp(function, "bg")){
                     strcpy(background, value);
-                    //printf("new background: %s", background);
+                    //printf("background: %s", background);
                 }
-                if(!strcmp(function, "end") && !choicesEnabled){
+                if(!strcmp(function, "trans")){
+                    strcpy(newBackground, value);
+                    state = 2;
+                    transitionCounter = 19;
+                }
+                if(!strcmp(function, "end") && !state){
                     strcpy(choices[0], "");
                     for (int j = 0; j < atoi(value); j ++){
                         readALineOfFile("res/visual", tempVisual, index + j + 1);
                         strcpy(choices[j], tempVisual);
                         strcpy(choices[j + 1], "");
+                        state = 1;
                         choicesEnabled ++;
                     }
                 }
@@ -164,22 +177,31 @@ int main(){
             readALineOfFile("res/visual", visual, index);
         }
 
-        if(!choicesEnabled/* && visual[0] != '~' - unused """quality of life""" feature*/){
+        if(!state){ //                               // visual handler
             int item = 1;
-            strcpy(character, "");
+            strcpy(newCharacter, "");
             strcpy(name, "");
-            for(int i = 0; visual[i] != '\n'; i ++){ // visual handler){
+            for(int i = 0; visual[i] != '\n'; i ++){
                 if(visual[i] == ' '){
                     item ++;
                     i ++;
                 }
-                if(item == 1/* && visual[i] != '~'*/)
-                    character[strlen(character)] = visual[i];
-                if(item == 2)
-                    if(visual[i] == 'l')
+                if(item == 1){ // filename
+                    newCharacter[strlen(newCharacter) + 1] = '\0';
+                    newCharacter[strlen(newCharacter)] = visual[i];
+                }
+                if(item == 2){ // position
+                    newCharacterPos = visual[i];
+                    if(newCharacterPos != characterPos){
+                        state = 3;
+                        transitionCounter = 0;
+                    } else
+                        strcpy(character, newCharacter);
+                    /*if(visual[i] == 'l')
                         characterX = 0;
-                    else characterX = 640 - characterWidth;
-                if(item == 3/* && visual[i] != '~'*/){
+                    else characterX = 640 - characterWidth;*/
+                }
+                if(item == 3){ // dialog name
                     //printf("%i > ", strlen(name));
                     //printf("%lu, %c > ", strlen(name), visual[i]);
                     name[strlen(name) + 1] = '\0';
@@ -188,37 +210,77 @@ int main(){
                 }
             }
         }
+                    XCopyArea(display, whole, window, graph, 0, 0, 640, 480, 0, 0);
         
-        toPath("res/backgrounds/", background, ".png.xpm", path);
+        toPath("res/backgrounds/", background, ".xpm", path);
+        //printf("Background: %s\n", background);
         Pixmap backgroundMap = loadXpm(display, window, path, NULL, 0, 0);
         XCopyArea(display, backgroundMap, whole, graph, 0, 0, 640, 480, 0, 0);
-        toPath("res/chars/", character, ".png.xpm", path);
+        toPath("res/chars/", character, ".xpm", path);
+        //printf("Character: %s - %s\n", character, path);
         Pixmap charMap = loadXpm(display, window, path, &mask, characterX, characterY);
         XCopyArea(display, charMap, whole, mask, 0, 0, characterWidth, characterHeight, characterX, characterY);
         
-        if(!choicesEnabled){
-            Pixmap textboxMap = loadXpm(display, window, "res/gui/box.png.xpm", &mask, 0, 0);
+        switch(state){
+        case 0: // dialog
+            Pixmap textboxMap = loadXpm(display, window, "res/gui/box.xpm", &mask, 0, 0);
             XCopyArea(display, textboxMap, whole, mask, 0, 0, 640, 480, 0, 0);
             XFreePixmap(display, textboxMap);
             readALineOfFile("res/novel", dialog, index);
             //printf("%s", dialog);
             XDrawString(display, whole, graph, 32, 392, dialog, strlen(dialog) - 1);
             XDrawString(display, whole, graph, 16, 360, name, strlen(name));
-        } else{
+            break;
+        case 1: // choices
             for(int i = 0; choices[i][0] != '\0'; i ++){
-                Pixmap buttonMap = loadXpm(display, window, "res/gui/button.png.xpm", &mask, 32, 100 + i * 40);
+                Pixmap buttonMap = loadXpm(display, window, "res/gui/button.xpm", &mask, 32, 100 + i * 40);
                 XCopyArea(display, buttonMap, whole, mask, 0, 0, 169, 30, 32, 100 + i * 40);
                 XFreePixmap(display, buttonMap);
                 readALineOfFile("res/novel", dialog, index + i);
                 XDrawString(display, whole, graph, 44, 100 + 20 + i * 40, dialog, strlen(dialog) - 1);
             }
+            break;
+        case 2: // simple transition
+            Pixmap transition = loadXpm(display, window, "res/gui/transition.xpm", NULL, 0, 0);
+            short transitionX = (transitionCounter - 10) * (transitionCounter - 10) * 128 / 10;
+            if(transitionCounter - 10 < 0) transitionX = -transitionX;
+            XCopyArea(display, transition, whole, graph, 0, 0, 640, 480, transitionX, 0);
+            XFreePixmap(display, transition);
+            transitionCounter --;
+            if(!(transitionCounter - 10)){
+                strcpy(background, newBackground);
+                strcpy(character, "blank");
+            }
+            if(!transitionCounter)
+                state = 0;
+            break;
+        case 3: // character panning
+            signed char sign;
+            if(characterPos == 'l')
+                sign = -1;
+            else sign = 1;
+            transitionCounter += 5;
+            characterX += transitionCounter * sign;
+            if(transitionCounter == 50){
+                if(newCharacterPos == 'r')
+                    characterX = 640;
+                else characterX = 0 - characterWidth;
+                transitionCounter = -transitionCounter;
+                characterPos = newCharacterPos;
+                strcpy(character, newCharacter);
+            }
+            if(transitionCounter == 0){
+                state = 0;
+            }
+            //printf("%i - %i:%i\n", sign, transitionCounter, characterX);
+            break;
         }
         
         Pixmap quit = makeButton(display, window, "Quit", 0);
         Pixmap quit_= makeButton(display, window, "Quit", 1);
         XCopyArea(display, quit, whole, graph, 0, 0, 64, 16, 0, 0);
 
-        while(XPending(display)){
+        while(XPending(display)){ //        --events--
             XNextEvent(display, &event);
             if(event.type == ButtonPress){
                 //printf("_");
@@ -231,10 +293,11 @@ int main(){
                     XCloseDisplay(display);
                     return 0;
                 }
-                if(!choicesEnabled){
+                if(!state){
                     if(hovering(event, 0, 0, 640, 480))
                         index ++;
-                } else{
+                }
+                if(state == 1){
                     if(hovering(event, 0, 100, 640, 40 * choicesEnabled)){
                         readALineOfFile("res/visual", visual, 1);
                         strcpy(tempVisual, "?");
@@ -245,7 +308,8 @@ int main(){
                             readALineOfFile("res/visual", visual, index);
                             //printf("At %i - %s : %s \n", index, tempVisual, visual);
                         }
-                        choicesEnabled = false;
+                        choicesEnabled = 0;
+                        state = 0;
                     }
                 }
             }

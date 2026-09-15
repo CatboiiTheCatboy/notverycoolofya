@@ -1,2 +1,3 @@
-#define Title "simpleVisual"
-#define Version "0.0.6"
+//#define Title "simpleVisual"
+#define Title "Not Very Cool of Ya! - simpleVisual"
+#define Version "v0.0.7"

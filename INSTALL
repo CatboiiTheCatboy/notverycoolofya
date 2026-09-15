@@ -1,0 +1,15 @@
+simpleVisual Installation Guide
+
+
+Compilation
+
+    To compile, simply run
+        make
+    and then the binary will magically appear.
+
+
+Running
+
+    The command
+        ./main
+    launches the binary.

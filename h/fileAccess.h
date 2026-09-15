@@ -12,15 +12,16 @@
 
 void readALineOfFile(const char* from, char* toString, int line){
     FILE* file = fopen(from, "r");
-    char string[50] = "";
+    char string[200] = "";
     
     for(int i = 1; i < line; i ++) // duct tape solution for line scrolling
-        fgets(string, 50, file);
+        fgets(string, 200, file);
 
-    if(fgets(string, 50, file))
+    if(fgets(string, 200, file))
         strcpy(toString, string);
     else strcpy(toString, "");
 }
+
 void readFile(const char* from, char* toString){
     FILE* file = fopen(from, "r");
     char string[100] = "";
