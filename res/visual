@@ -12,9 +12,10 @@ scShocked2 r Sciss
 scShocked2 r Sciss
 scShocked2 r  
 !trans pitch
-blank l  
+blank r  
 ?hall1
 !trans high2
+blank l  
 scDown r Sciss
 scDown r Sciss
 !end 2
@@ -27,10 +28,13 @@ scLook r Sciss
 scLook r Sciss
 scLook2 r  
 scShocked r  
-scDown r Sciss
+scShocked r Sciss
 !end 2
 hall2
 hall1_
 
 ?hall2
-!Trans 
+!trans high3
+!end 2
+hall2_
+hall3

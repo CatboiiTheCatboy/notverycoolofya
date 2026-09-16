@@ -51,7 +51,7 @@ Pixmap makeButton(Display* display, Window window, const char* string, char down
     return button;
 }
 
-Pixmap makeFrame(Display* display, Window window, int width, int height){
+Pixmap makeFrame(Display* display, Window window, unsigned int width, unsigned int height){
     int screen = DefaultScreen(display);
     GC graph = XCreateGC(display, window, 0, NULL);
 
@@ -86,3 +86,20 @@ Pixmap loadXpm(Display* display, Window window, const char* from, GC* optGraphMa
     }
     return xpm;
 }
+
+/*
+Pixmap makePatternMask(Display* display, Window window, unsigned int width, unsigned int height, char preset, char step, GC* graphMask, int x, int y){
+    GC graph = XCreateGC(display, window, 0, NULL);
+    Pixmap mask = XCreatePixmap(display, window, width, height, 1);
+    XSetForeground(display, graph, 1);
+    XDrawRectangle(display, mask, graph, 0, 0, width, height);
+    XSetForeground(display, graph, 0);
+
+    switch(preset){
+    case '1':
+        break;
+    default:
+        break;
+    }
+}
+*/

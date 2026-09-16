@@ -8,6 +8,7 @@
 */
 
 #include <X11/Xlib.h>
+#include <X11/extensions/shape.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,7 +70,7 @@ int main(){
     XFillRectangle(display, whole, graph, 0, 0, 640, 480);
     XSetForeground(display, graph, BlackPixel(display, screen));
 
-    char loop = true;
+    char loop = true, titleTransition = 34;
     //char temp[50];
     while(loop){ //                         ---main menu---
         sleep(0.025);
@@ -78,12 +79,14 @@ int main(){
         //printf("%s", temp);
 
         GC mask = XCreateGC(display, whole, 0, NULL);
+        GC transitionMask = XCreateGC(display, whole, 0, NULL);
         Pixmap title = loadXpm(display, window, "res/gui/title.xpm", &mask, 0, 0);
         Pixmap titleBg = loadXpm(display, window, "res/backgrounds/title.xpm", NULL, 0, 0);
         Pixmap start = makeButton(display, window, "Start", 0);
         Pixmap start_= makeButton(display, window, "Start", 1);
         Pixmap quit  = makeButton(display, window, "Quit", 0);
         Pixmap quit_ = makeButton(display, window, "Quit", 1);
+        Pixmap transitionMap = XCreatePixmap(display, window, 640, 480, 1);
         //XDrawString(display, whole, graph, 0, 14, "A Cool Fan-game", 15);
         XCopyArea(display, titleBg, whole, graph, 0, 0, 640, 480, 0, 0);
         XCopyArea(display, title, whole, mask, 0, 0, 640, 480, 0, 0);
@@ -97,6 +100,27 @@ int main(){
         XDrawString(display, whole, graph, 0, 446, "This program comes with ABSOLUTELY NO WARRANTY.", 47);
         XDrawString(display, whole, graph, 0, 462, "This is free software, and you are welcome to redistribute it", 61);
         XDrawString(display, whole, graph, 0, 478, "under certain conditions; see COPYING for details.", 50);
+
+        if(titleTransition){
+            GC tempGraph = XCreateGC(display, transitionMap, 0, NULL);
+            XSetForeground(display, tempGraph, 0);
+            XFillRectangle(display, transitionMap, tempGraph, 0, 0, 640, 480);
+            XSetForeground(display, tempGraph, 1);
+            for(int i = 0; i < 24; i ++){
+                for(int j = i * 20; j < i * 19 + titleTransition; j ++)
+                    XDrawLine(display, transitionMap, tempGraph, 0, j, 640, j);
+                //printf("%i : %i\n", i * 10, i * 10 + titleTransition);
+            }
+            XSetClipMask(display, transitionMask, transitionMap);
+            XSetClipOrigin(display, transitionMask, 0, 0);
+            XSetForeground(display, transitionMask, WhitePixel(display, screen));
+            XFillRectangle(display, whole, transitionMask, 0, 0, 640, 480);
+
+            XFreeGC(display, tempGraph);
+            XFreeGC(display, transitionMask);
+            XFreePixmap(display, transitionMap);
+            titleTransition --;
+        }
 
         while(XPending(display)){
             XNextEvent(display, &event);
