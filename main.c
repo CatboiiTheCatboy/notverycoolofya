@@ -151,11 +151,12 @@ int main(){
 
 
     char character[20] = "blank", newCharacter[20], background[20] = "title", newBackground[20];
-    char characterPos = 'l', newCharacterPos;
-    short characterWidth = 267, characterHeight = 533;
-    int index = 1, characterX = 0, characterY = 0, transitionCounter = 0;
+    char characterPos = 'n', newCharacterPos;
+    short characterWidth = 267, characterHeight = 533, chipWidth = 80, chipHeight = 240;
+    int index = 1, characterX = 0, characterY = 0, transitionCounter = 0, chipStartIndex = 1, newChipStartIndex = 1;
     char dialog[200], name[20], visual[50], tempVisual[50], path[50], choices[6][50];
-    char choicesEnabled = false, state = 0;
+    char choicesEnabled = false, state = 0, chipset[20], newChipset[20];
+    Pixmap chips = XCreatePixmap(display, whole, 640, 480, DefaultDepth(display, screen));
     //Pixmap pixmap;
     while(true){ //                     ----visual novel----
         sleep(0.025);
@@ -195,6 +196,9 @@ int main(){
                         choicesEnabled ++;
                     }
                 }
+                if(!strcmp(function, "chips")){
+                    strcpy(newChipset, value);
+                }
             }
             
             index ++;
@@ -216,7 +220,7 @@ int main(){
                 }
                 if(item == 2){ // position
                     newCharacterPos = visual[i];
-                    if(newCharacterPos != characterPos){
+                    if(newCharacterPos != characterPos){ // enables panning
                         state = 3;
                         transitionCounter = 0;
                     } else
@@ -236,25 +240,53 @@ int main(){
         }
                     XCopyArea(display, whole, window, graph, 0, 0, 640, 480, 0, 0);
         
+        // background
+
         toPath("res/backgrounds/", background, ".xpm", path);
         //printf("Background: %s\n", background);
         Pixmap backgroundMap = loadXpm(display, window, path, NULL, 0, 0);
         XCopyArea(display, backgroundMap, whole, graph, 0, 0, 640, 480, 0, 0);
+
+        char chipList[20] = "100 100 blank\n";
+        int chipX, chipY;
+        //readALineOfFile("res/chips", chipList, chipStartIndex + 1); // possibly causes an extra loop
+        for(int i = 1; chipList[0] != '\n'; i ++){ // chips
+            //printf("Drawing chip: %s", chipList);
+            char value[10] = "";
+            int j = 0;
+            for(int k = 0; k < 2; k ++){
+                strcpy(value, "");
+                for(j = j; chipList[j] != ' '; j ++){
+                    value[strlen(value) + 1] = '\0';
+                    value[strlen(value)] = chipList[j];
+                }
+                if(!k)
+                    chipX = atoi(value);
+                else chipY = atoi(value);
+                j ++;
+            }
+
+            strcpy(value, "");
+            for(j = j; chipList[j] != '\n'; j ++){
+                value[strlen(value) + 1] = '\0';
+                value[strlen(value)] = chipList[j];
+            }
+            //printf("Placing chip: %s\n", value);
+            toPath("res/chars/", value, ".xpm", path);
+            Pixmap chipMap = loadXpm(display, window, path, &mask, chipX, chipY);
+            XCopyArea(display, chipMap, whole, mask, 0, 0, chipWidth, chipHeight, chipX, chipY);
+            XFreePixmap(display, chipMap);
+
+            readALineOfFile("res/chips", chipList, chipStartIndex + i);
+        }
+        // foreground
+
         toPath("res/chars/", character, ".xpm", path);
         //printf("Character: %s - %s\n", character, path);
         Pixmap charMap = loadXpm(display, window, path, &mask, characterX, characterY);
         XCopyArea(display, charMap, whole, mask, 0, 0, characterWidth, characterHeight, characterX, characterY);
         
-        switch(state){
-        case 0: // dialog
-            Pixmap textboxMap = loadXpm(display, window, "res/gui/box.xpm", &mask, 0, 0);
-            XCopyArea(display, textboxMap, whole, mask, 0, 0, 640, 480, 0, 0);
-            XFreePixmap(display, textboxMap);
-            readALineOfFile("res/novel", dialog, index);
-            //printf("%s", dialog);
-            XDrawString(display, whole, graph, 32, 392, dialog, strlen(dialog) - 1);
-            XDrawString(display, whole, graph, 16, 360, name, strlen(name));
-            break;
+        switch(state){ // functions
         case 1: // choices
             for(int i = 0; choices[i][0] != '\0'; i ++){
                 Pixmap buttonMap = loadXpm(display, window, "res/gui/button.xpm", &mask, 32, 100 + i * 40);
@@ -264,6 +296,7 @@ int main(){
                 XDrawString(display, whole, graph, 44, 100 + 20 + i * 40, dialog, strlen(dialog) - 1);
             }
             break;
+
         case 2: // simple transition
             Pixmap transition = loadXpm(display, window, "res/gui/transition.xpm", NULL, 0, 0);
             short transitionX = (transitionCounter - 10) * (transitionCounter - 10) * 128 / 10;
@@ -274,21 +307,43 @@ int main(){
             if(!(transitionCounter - 10)){
                 strcpy(background, newBackground);
                 strcpy(character, "blank");
+
+                // changing chipset
+                char tempChipQuery[20] = "?";
+                if(strcmp(chipset, newChipset)){
+                    strcat(tempChipQuery, newChipset);
+                    strcat(tempChipQuery, "\n");
+                    //readALineOfFile("res/chips", chipList, 1);
+                    chipStartIndex = 0;
+                    do{
+                        chipStartIndex ++;
+                        //printf("Listing: %i: %s\\0 - %s\\0\n", chipStartIndex, tempChipQuery, chipList);
+                        readALineOfFile("res/chips", chipList, chipStartIndex);
+                    } while(strcmp(tempChipQuery, chipList));
+                    //printf("New chip index: %i\n", chipStartIndex);
+                    strcpy(chipset, newChipset);
+                }
+
             }
-            if(!transitionCounter)
+            if(!transitionCounter){
                 state = 0;
+                //characterPos = 'n';
+            }
             break;
+
         case 3: // character panning
             signed char sign;
             if(characterPos == 'l')
                 sign = -1;
-            else sign = 1;
+            if(characterPos == 'r')
+                sign = 1;
             transitionCounter += 5;
             characterX += transitionCounter * sign;
             if(transitionCounter == 50){
-                if(newCharacterPos == 'r')
+                if(characterPos == 'l' || newCharacterPos == 'r')
                     characterX = 640;
-                else characterX = 0 - characterWidth;
+                if(characterPos == 'r' || newCharacterPos == 'l')
+                    characterX = 10 - characterWidth;
                 transitionCounter = -transitionCounter;
                 characterPos = newCharacterPos;
                 strcpy(character, newCharacter);
@@ -297,6 +352,16 @@ int main(){
                 state = 0;
             }
             //printf("%i - %i:%i\n", sign, transitionCounter, characterX);
+            break;
+
+        default: // dialog
+            Pixmap textboxMap = loadXpm(display, window, "res/gui/box.xpm", &mask, 0, 0);
+            XCopyArea(display, textboxMap, whole, mask, 0, 0, 640, 480, 0, 0);
+            XFreePixmap(display, textboxMap);
+            readALineOfFile("res/novel", dialog, index);
+            //printf("%s", dialog);
+            XDrawString(display, whole, graph, 32, 392, dialog, strlen(dialog) - 1);
+            XDrawString(display, whole, graph, 16, 360, name, strlen(name));
             break;
         }
         
@@ -328,10 +393,12 @@ int main(){
                         strcat(tempVisual, choices[(event.xmotion.y - 100) / 40]);
                         //printf("Looking for %s\n", tempVisual);
 
-                        for(index = 2; strcmp(tempVisual, visual); index ++){
+                        index = 0;
+                        do{
+                            index ++;
                             readALineOfFile("res/visual", visual, index);
                             //printf("At %i - %s : %s \n", index, tempVisual, visual);
-                        }
+                        } while(strcmp(tempVisual, visual));
                         choicesEnabled = 0;
                         state = 0;
                     }

@@ -13,6 +13,7 @@
 #define false 0
 //#include <stdio.h>
 
+// HIGHLY unoptimized "sleep" and "wait" functions lie here
 void wait(int waitFor){
     long long until = time(NULL) + waitFor;
     while (time(NULL) < until){}

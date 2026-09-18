@@ -1,7 +1,8 @@
 ?begin
 !bg title
+!chips 2c-1
 !trans high1
-blank l  
+blank n  
 scShocked r  
 scShocked r  
 scShocked r Sciss
@@ -11,9 +12,28 @@ scShocked r
 scShocked2 r Sciss
 scShocked2 r Sciss
 scShocked2 r  
+blank n  
+blank n  
+!end 1
+kyle
+
+
+?kyle
+klSit l  
+klSit l Sciss
+klSit l  
+klSit l Sciss
+klSit2 l  ???
+scShocked3 r Sciss
+scShocked r Sciss
+klLook2 l ???
+
+
+!chips none
 !trans pitch
 blank r  
 ?hall1
+!chips hall1-1
 !trans high2
 blank l  
 scDown r Sciss
